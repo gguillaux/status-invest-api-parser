@@ -1,7 +1,6 @@
 import requests
 import pandas as pd
 
-
 def get_indicator_history(codes, time, by_quarter, future_data):
     url = 'https://statusinvest.com.br/acao/indicatorhistoricallist'
     params = {
@@ -24,18 +23,18 @@ def get_indicator_history(codes, time, by_quarter, future_data):
         return data['data']
     else:
         return None
-
-
+    
 
 def filter_indicators_json_data(json_data):
-    main_keys = ('key', 'actual_F', 'avg_F', 'avgDifference_F', 
+    main_keys = ('key', 'actual', 'actual_F', 'avg_F', 'avgDifference', 
                       'minValue_F', 'minValueRank_F', 'maxValue_F', 'maxValueRank_F')
 
     indicators = []
     for item in json_data:
         indicators.append({key: item[key] for key in main_keys})
     return indicators
-
+        
+            
 
 
 def parse_indicator_history(symbol):
@@ -61,10 +60,55 @@ def parse_indicator_history(symbol):
         return None
 
 
+def systematic_filters(df):
+    # SPECIFY IF YOY WANT TO SORT THE DATA IN ASCENDING ORDER
+    non_negative_filters = {
+        'dy' : False,
+        'p_l': True,
+        'p_vp': True,
+        'p_ebita': True,
+        'p_ebit': True,
+        'p_sr': True,
+        'p_ativo': True,
+        'p_capitlgiro': True,
+        'ev_ebitda': True,
+        'ev_ebit': True,
+        'peg_Ratio': True,
+        'roe': False,
+        'roic': False,
+        'lpa': False,
+        'margemliquida': False,
+        'receitas_cagr5': False,
+        'lucros_cagr5': False,
+        'liquidezcorrente': False
+    }
+    debt_filters = {
+        'dividaliquida_patrimonioliquido': True,
+        'dividaliquida_ebitda': True,
+        'dividaliquida_ebit': True
+    }
+
+    champions = []
+    df_non_negative = df[df['actual'] >= 0]
+    for filter in non_negative_filters:
+        sorting_mode = non_negative_filters[filter]
+        filtered = df_non_negative[df_non_negative['key'] == filter].sort_values(by=['avgDifference', 'actual'], ascending=sorting_mode).head(15)
+        champions.append(filtered['ticker'])
+    
+    for filter in debt_filters:
+        sorting_mode = debt_filters[filter]
+        filtered = df[df['key'] == filter].sort_values(by=['avgDifference', 'actual'], ascending=sorting_mode).head(15)
+        champions.append(filtered['ticker'])
+    df_champions = pd.concat(champions).value_counts().head(10)
+    print(df_champions)
+    df_champions.to_csv('champions.csv', index=False)
+
+
 if __name__ == '__main__':
     with open('asset_list.txt', 'r') as f:
         symbols = f.read().splitlines()
     dfs = [parse_indicator_history(symbol) for symbol in symbols]
-    df = pd.concat(dfs, ignore_index=True)
+    df = pd.concat(dfs, ignore_index=True).replace(',', '.', regex=True)
     print(df)
-    df.to_csv('assets_indicators.csv', index=False)
+    systematic_filters(df)
+    df.to_csv('raw_data_assets_indicators.csv', index=False)
