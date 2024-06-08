@@ -1,6 +1,8 @@
 import requests
 import pandas as pd
 
+ASSETS_FILE = 'core.txt'
+
 def get_indicator_history(codes, time, by_quarter, future_data):
     url = 'https://statusinvest.com.br/acao/indicatorhistoricallist'
     params = {
@@ -62,6 +64,7 @@ def parse_indicator_history(symbol):
 
 def systematic_filters(df):
     # SPECIFY IF YOY WANT TO SORT THE DATA IN ASCENDING ORDER
+    HEAD_COUNT = 15
     non_negative_filters = {
         'dy' : False,
         'p_l': True,
@@ -92,20 +95,21 @@ def systematic_filters(df):
     df_non_negative = df[df['actual'] >= 0]
     for filter in non_negative_filters:
         sorting_mode = non_negative_filters[filter]
-        filtered = df_non_negative[df_non_negative['key'] == filter].sort_values(by=['avgDifference', 'actual'], ascending=sorting_mode).head(15)
-        champions.append(filtered['ticker'])
+        filtered = df_non_negative[df_non_negative['key'] == filter].sort_values(by=['avgDifference', 'actual'], ascending=sorting_mode).head(HEAD_COUNT)
+        champions.append(filtered)
     
     for filter in debt_filters:
         sorting_mode = debt_filters[filter]
-        filtered = df[df['key'] == filter].sort_values(by=['avgDifference', 'actual'], ascending=sorting_mode).head(15)
-        champions.append(filtered['ticker'])
-    df_champions = pd.concat(champions).value_counts().head(10)
-    print(df_champions)
+        filtered = df[df['key'] == filter].sort_values(by=['avgDifference', 'actual'], ascending=sorting_mode).head(HEAD_COUNT)
+        champions.append(filtered)
+    df_champions = pd.concat(champions)
     df_champions.to_csv('champions.csv', index=False)
+    most_occurences = df_champions['ticker'].value_counts().head(10)
+    print(most_occurences)
 
 
 if __name__ == '__main__':
-    with open('asset_list.txt', 'r') as f:
+    with open(ASSETS_FILE, 'r') as f:
         symbols = f.read().splitlines()
     dfs = [parse_indicator_history(symbol) for symbol in symbols]
     df = pd.concat(dfs, ignore_index=True).replace(',', '.', regex=True)
