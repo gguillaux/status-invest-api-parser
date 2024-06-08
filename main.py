@@ -14,7 +14,11 @@ else:
     HEAD_COUNT = int(sys.argv[2])
 
 def get_indicator_history(codes, time, by_quarter, future_data):
-    url = 'https://statusinvest.com.br/acao/indicatorhistoricallist'
+    if codes[-2:] in ('31', '32', '33', '34', '35', '36', '37', '38', '39'):
+        url = 'https://statusinvest.com.br/bdr/indicatorhistoricallist'
+    else:
+        url = 'https://statusinvest.com.br/acao/indicatorhistoricallist'
+
     params = {
         'codes': codes,
         'time': time,
@@ -48,14 +52,12 @@ def filter_indicators_json_data(json_data):
         
             
 
-
 def parse_indicator_history(symbol):
     codes = symbol
     time = 5
     by_quarter = False
     future_data = False
     
-
     table_data = get_indicator_history(codes, time, by_quarter, future_data)
 
     if table_data:
@@ -122,6 +124,6 @@ if __name__ == '__main__':
         symbols = f.read().splitlines()
     dfs = [parse_indicator_history(symbol) for symbol in symbols]
     df = pd.concat(dfs, ignore_index=True).replace(',', '.', regex=True)
-    print(df)
+    #print(df)
     systematic_filters(df)
     df.to_csv('raw_data_assets_indicators.csv', index=False)
