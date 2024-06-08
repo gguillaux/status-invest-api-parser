@@ -1,7 +1,17 @@
+import sys
 import requests
 import pandas as pd
 
-ASSETS_FILE = 'core.txt'
+
+if len(sys.argv) == 1:
+    ASSETS_FILE = 'eletricas.txt'
+else:
+    ASSETS_FILE = sys.argv[1]
+
+if len(sys.argv) < 3:
+    HEAD_COUNT = 5
+else:
+    HEAD_COUNT = int(sys.argv[2])
 
 def get_indicator_history(codes, time, by_quarter, future_data):
     url = 'https://statusinvest.com.br/acao/indicatorhistoricallist'
@@ -64,7 +74,6 @@ def parse_indicator_history(symbol):
 
 def systematic_filters(df):
     # SPECIFY IF YOY WANT TO SORT THE DATA IN ASCENDING ORDER
-    HEAD_COUNT = 15
     non_negative_filters = {
         'dy' : False,
         'p_l': True,
