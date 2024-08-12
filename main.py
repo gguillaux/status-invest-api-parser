@@ -1,6 +1,8 @@
 import sys
 import requests
+import requests_cache
 import pandas as pd
+
 
 
 if len(sys.argv) == 1:
@@ -12,6 +14,9 @@ if len(sys.argv) < 3:
     HEAD_COUNT = 5
 else:
     HEAD_COUNT = int(sys.argv[2])
+
+requests_cache.install_cache('statusinvest_cache', backend='sqlite', expire_after=3600)
+
 
 def get_indicator_history(codes, time, by_quarter, future_data):
     if codes[-2:] in ('31', '32', '33', '34', '35', '36', '37', '38', '39'):
