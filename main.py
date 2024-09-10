@@ -121,7 +121,7 @@ def systematic_filters(df):
     df_champions = pd.concat(champions)
     df_champions.to_csv('champions.csv', index=False)
     most_occurences = df_champions['ticker'].value_counts().head(10)
-    print(most_occurences)
+    print("\n", most_occurences, "\n")
 
 
 if __name__ == '__main__':
